@@ -88,6 +88,9 @@ public class Main {
         teclado.close();
     }
 
+    /**
+     * Muestra las opciones disponibles en el menu principal.
+     */
     static void mostrarMenu() {
         System.out.println("""
                 ===== Sistema de Control del Grupo POO =====
@@ -101,6 +104,12 @@ public class Main {
                 """);
     }
 
+    /**
+     * Lee una opcion numerica sin detener el programa si la entrada no es valida.
+     *
+     * @param teclado lector utilizado para recibir la opcion
+     * @return opcion ingresada, -1 si no es un numero o 7 si termino la entrada
+     */
     static int leerOpcion(Scanner teclado) {
         System.out.print("Ingrese opcion: ");
 
@@ -342,6 +351,12 @@ public class Main {
         }
     }
 
+    /**
+     * Lee una linea de texto y elimina los espacios de sus extremos.
+     *
+     * @param teclado lector utilizado para recibir el texto
+     * @return texto ingresado o una cadena vacia si termino la entrada
+     */
     static String leerTexto(Scanner teclado) {
         if (teclado.hasNextLine()) {
             return teclado.nextLine().trim();
@@ -349,6 +364,13 @@ public class Main {
         return "";
     }
 
+    /**
+     * Busca a un alumno mediante su nombre y apellido, ignorando mayusculas.
+     *
+     * @param nombre nombre que se desea buscar
+     * @param apellido apellido que se desea buscar
+     * @return posicion del alumno o -1 si no se encuentra
+     */
     static int buscarAlumnoPorNombre(String nombre, String apellido) {
         for (int i = 0; i < cantidadAlumnos; i++) {
             if (nombre.equalsIgnoreCase(nombresAlumnos[i])
@@ -359,6 +381,12 @@ public class Main {
         return -1;
     }
 
+    /**
+     * Busca a un alumno mediante su RUT, ignorando mayusculas.
+     *
+     * @param rut RUT que se desea buscar
+     * @return posicion del alumno o -1 si no se encuentra
+     */
     static int buscarAlumnoPorRut(String rut) {
         for (int i = 0; i < cantidadAlumnos; i++) {
             if (rut.equalsIgnoreCase(rutsAlumnos[i])) {
@@ -368,6 +396,12 @@ public class Main {
         return -1;
     }
 
+    /**
+     * Busca a un miembro del grupo mediante su RUT.
+     *
+     * @param rut RUT que se desea buscar
+     * @return posicion del miembro o -1 si no se encuentra
+     */
     static int buscarMiembroPorRut(String rut) {
         for (int i = 0; i < cantidadMiembros; i++) {
             if (rut.equalsIgnoreCase(rutsMiembros[i])) {
@@ -377,6 +411,12 @@ public class Main {
         return -1;
     }
 
+    /**
+     * Copia los datos de un alumno a los vectores de miembros del grupo.
+     *
+     * @param posicionAlumno posicion del alumno que sera admitido
+     * @return true si se agrego o false si no queda espacio
+     */
     static boolean agregarMiembro(int posicionAlumno) {
         if (cantidadMiembros == MAX) {
             System.out.println("No hay espacio para agregar mas miembros.");
@@ -391,6 +431,11 @@ public class Main {
         return true;
     }
 
+    /**
+     * Inscribe a un alumno en el grupo si todavia no pertenece a este.
+     *
+     * @param posicionAlumno posicion del alumno que se desea inscribir
+     */
     static void inscribirAlumno(int posicionAlumno) {
         if (buscarMiembroPorRut(rutsAlumnos[posicionAlumno]) != -1) {
             System.out.println(nombresAlumnos[posicionAlumno] + " "
@@ -405,6 +450,12 @@ public class Main {
         }
     }
 
+    /**
+     * Guarda el nombre o el RUT disponible de una solicitud rechazada.
+     *
+     * @param detalle informacion que quedara en el registro
+     * @return true si se guardo o false si no queda espacio
+     */
     static boolean agregarRechazado(String detalle) {
         if (cantidadRechazados == MAX) {
             System.out.println("No hay espacio para registrar mas rechazados.");
@@ -416,6 +467,12 @@ public class Main {
         return true;
     }
 
+    /**
+     * Comprueba que el paralelo sea C1 o C2.
+     *
+     * @param paralelo paralelo que se desea comprobar
+     * @return true si el paralelo es valido
+     */
     static boolean esParaleloValido(String paralelo) {
         return paralelo.equals("C1") || paralelo.equals("C2");
     }

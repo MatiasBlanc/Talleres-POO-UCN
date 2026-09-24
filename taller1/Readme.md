@@ -344,6 +344,35 @@ public class Main {
 
 ---
 
+## Ejecución del programa
+
+### Requisitos
+
+- Java Development Kit (JDK) 17 o una versión posterior.
+- Una terminal ubicada en la carpeta del repositorio.
+
+### Clonar y compilar
+
+```bash
+git clone https://github.com/MatiasBlanc/Talleres-POO-UCN.git
+cd Talleres-POO-UCN/taller1
+javac -d bin src/module-info.java src/taller1/Main.java
+```
+
+### Ejecutar
+
+El programa debe iniciarse desde `taller1` para que encuentre `Alumnos.txt` y
+`Solicitudes.txt` en la ubicación esperada:
+
+```bash
+java --module-path bin --module taller1/taller1.Main
+```
+
+Para probarlo, primero se debe seleccionar la opción `1` y luego recorrer las
+opciones del menú. Los reportes creados se guardan dentro de `Reportes/`.
+
+---
+
 ## Fechas
 
 Inicio -> _01-Sep-2026_
