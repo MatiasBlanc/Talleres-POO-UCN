@@ -148,6 +148,36 @@ public class Main {
 
     static void procesarSolicitudes() {
         System.out.println("Procesando solicitudes...");
+        
+        for (int i = 0; i < cantidadSolicitudes; i++) {
+        	boolean encontrado = false;
+        	
+        	for (int j = 0; j < cantidadAlumnos; j++) {
+        		if (nombresSolicitudes[i].equalsIgnoreCase(nombresAlumnos[j]) && 
+        				apellidosSolicitudes[i].equalsIgnoreCase(apellidosAlumnos[j])) {
+        			
+        			encontrado = true;
+
+                    System.out.println(
+                        "[OK] " +
+                        nombresSolicitudes[i] + " " +
+                        apellidosSolicitudes[i] +
+                        " pertenece a " +
+                        paralelosAlumnos[j]
+                    );
+
+                    break;
+                }
+            }
+
+            if (!encontrado) {
+                System.out.println(
+                    "[RECHAZO] " +
+                    nombresSolicitudes[i] + " " +
+                    apellidosSolicitudes[i]
+                );
+            }
+        }
     }
 
     static void inscripcionManual() {
