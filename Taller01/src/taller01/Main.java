@@ -2,7 +2,7 @@
  * Matias Blanc - 22330528-8 - ICCI
  */
 
-package taller1;
+package taller01;
 
 import java.util.Scanner;
 import java.io.File;

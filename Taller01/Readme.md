@@ -355,17 +355,17 @@ public class Main {
 
 ```bash
 git clone https://github.com/MatiasBlanc/Talleres-POO-UCN.git
-cd Talleres-POO-UCN/taller1
-javac -d bin src/module-info.java src/taller1/Main.java
+cd Talleres-POO-UCN/Taller01
+javac -d bin src/module-info.java src/taller01/Main.java
 ```
 
 ### Ejecutar
 
-El programa debe iniciarse desde `taller1` para que encuentre `Alumnos.txt` y
+El programa debe iniciarse desde `Taller01` para que encuentre `Alumnos.txt` y
 `Solicitudes.txt` en la ubicación esperada:
 
 ```bash
-java --module-path bin --module taller1/taller1.Main
+java --module-path bin --module taller01/taller01.Main
 ```
 
 Para probarlo, primero se debe seleccionar la opción `1` y luego recorrer las
