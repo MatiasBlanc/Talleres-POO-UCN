@@ -67,7 +67,7 @@ public class Main {
                     administrarCurso(teclado);
                     break;
                 case 5:
-                    generarReportes();
+                    generarReportes(teclado);
                     break;
                 case 6:
                     mostrarEstadisticas();
@@ -650,8 +650,169 @@ public class Main {
         }
     }
 
-    static void generarReportes() {
-        System.out.println("Generando reportes...");
+    /**
+     * Muestra el menu para generar reportes de miembros y de rechazos.
+     * Cada reporte nuevo se guarda con su propia version.
+     *
+     * @param teclado lector utilizado para recibir la opcion del usuario
+     */
+    static void generarReportes(Scanner teclado) {
+        if (!archivosCargados) {
+            System.out.println("Primero debe cargar los archivos.");
+            return;
+        }
+
+        int opcion = 0;
+
+        while (opcion != 4) {
+            System.out.println("""
+                    --- Generacion de reportes ---
+                    1) Reporte de miembros de C1
+                    2) Reporte de miembros de C2
+                    3) Reporte de solicitudes rechazadas
+                    4) Volver
+                    """);
+            opcion = leerOpcion(teclado);
+
+            switch (opcion) {
+                case 1:
+                    generarReporteParalelo("C1");
+                    break;
+                case 2:
+                    generarReporteParalelo("C2");
+                    break;
+                case 3:
+                    generarReporteRechazados();
+                    break;
+                case 4:
+                    break;
+                case 7:
+                    // Permite terminar si ya no quedan datos en la entrada por consola.
+                    return;
+                default:
+                    System.out.println("Opcion invalida.");
+            }
+        }
+    }
+
+    /**
+     * Genera un archivo con los miembros actuales de un paralelo.
+     *
+     * @param paralelo paralelo que se incluira en el reporte, C1 o C2
+     */
+    static void generarReporteParalelo(String paralelo) {
+        File carpetaReportes = prepararCarpetaReportes();
+
+        if (carpetaReportes == null) {
+            return;
+        }
+
+        String nombreBase = "Reporte" + paralelo;
+        int version = buscarSiguienteVersion(carpetaReportes, nombreBase);
+        File archivoReporte = new File(carpetaReportes,
+                nombreBase + "-V" + version + ".txt");
+
+        try {
+            BufferedWriter escritor = new BufferedWriter(new FileWriter(archivoReporte));
+            escritor.write("=== Miembros del grupo - Paralelo " + paralelo + " ===");
+            escritor.newLine();
+
+            for (int i = 0; i < cantidadMiembros; i++) {
+                if (paralelo.equals(paralelosMiembros[i])) {
+                    escritor.write(nombresMiembros[i] + " " + apellidosMiembros[i]
+                            + " - " + rutsMiembros[i]);
+                    escritor.newLine();
+                }
+            }
+
+            escritor.close();
+            System.out.println("Reporte creado: " + archivoReporte.getPath());
+        } catch (IOException e) {
+            System.out.println("No se pudo crear el reporte de " + paralelo + ".");
+        }
+    }
+
+    /**
+     * Genera un archivo con todas las solicitudes rechazadas registradas.
+     */
+    static void generarReporteRechazados() {
+        File carpetaReportes = prepararCarpetaReportes();
+
+        if (carpetaReportes == null) {
+            return;
+        }
+
+        String nombreBase = "Rechazados";
+        int version = buscarSiguienteVersion(carpetaReportes, nombreBase);
+        File archivoReporte = new File(carpetaReportes,
+                nombreBase + "-V" + version + ".txt");
+
+        try {
+            BufferedWriter escritor = new BufferedWriter(new FileWriter(archivoReporte));
+            escritor.write("=== Solicitudes rechazadas ===");
+            escritor.newLine();
+
+            for (int i = 0; i < cantidadRechazados; i++) {
+                if (rechazados[i].startsWith("Sin nombre registrado, RUT:")) {
+                    escritor.write(rechazados[i]);
+                } else {
+                    escritor.write(rechazados[i]
+                            + " - No pertenece a ningun paralelo del curso");
+                }
+                escritor.newLine();
+            }
+
+            escritor.close();
+            System.out.println("Reporte creado: " + archivoReporte.getPath());
+        } catch (IOException e) {
+            System.out.println("No se pudo crear el reporte de rechazados.");
+        }
+    }
+
+    /**
+     * Crea la carpeta Reportes cuando todavia no existe.
+     *
+     * @return la carpeta de reportes o null si no pudo prepararse
+     */
+    static File prepararCarpetaReportes() {
+        File carpetaReportes = new File("Reportes");
+
+        if (carpetaReportes.exists()) {
+            if (carpetaReportes.isDirectory()) {
+                return carpetaReportes;
+            }
+
+            System.out.println("No se pueden generar reportes porque Reportes no es una carpeta.");
+            return null;
+        }
+
+        if (carpetaReportes.mkdir()) {
+            return carpetaReportes;
+        }
+
+        System.out.println("No se pudo crear la carpeta Reportes.");
+        return null;
+    }
+
+    /**
+     * Busca el primer numero de version que aun no ha sido utilizado.
+     *
+     * @param carpetaReportes carpeta en la que se guardan los reportes
+     * @param nombreBase inicio del nombre del archivo, sin version ni extension
+     * @return siguiente numero de version disponible
+     */
+    static int buscarSiguienteVersion(File carpetaReportes, String nombreBase) {
+        int version = 1;
+        File archivo = new File(carpetaReportes,
+                nombreBase + "-V" + version + ".txt");
+
+        while (archivo.exists()) {
+            version++;
+            archivo = new File(carpetaReportes,
+                    nombreBase + "-V" + version + ".txt");
+        }
+
+        return version;
     }
 
     static void mostrarEstadisticas() {
