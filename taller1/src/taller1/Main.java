@@ -6,6 +6,8 @@ package taller1;
 
 import java.util.Scanner;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
 
 public class Main {
@@ -62,7 +64,7 @@ public class Main {
                     inscripcionManual(teclado);
                     break;
                 case 4:
-                    administrarCurso();
+                    administrarCurso(teclado);
                     break;
                 case 5:
                     generarReportes();
@@ -402,8 +404,250 @@ public class Main {
         return paralelo.equals("C1") || paralelo.equals("C2");
     }
 
-    static void administrarCurso() {
-        System.out.println("Administracion del curso...");
+    /**
+     * Muestra el menu de administracion y permite modificar la lista del curso.
+     *
+     * @param teclado lector utilizado para recibir los datos ingresados
+     */
+    static void administrarCurso(Scanner teclado) {
+        if (!archivosCargados) {
+            System.out.println("Primero debe cargar los archivos.");
+            return;
+        }
+
+        int opcion = 0;
+
+        while (opcion != 4) {
+            System.out.println("""
+                    --- Administracion del curso ---
+                    1) Cambiar paralelo de un alumno
+                    2) Eliminar alumno del curso
+                    3) Inscribir alumno nuevo
+                    4) Volver
+                    """);
+            opcion = leerOpcion(teclado);
+
+            switch (opcion) {
+                case 1:
+                    cambiarParalelo(teclado);
+                    break;
+                case 2:
+                    eliminarAlumno(teclado);
+                    break;
+                case 3:
+                    agregarAlumno(teclado);
+                    break;
+                case 4:
+                    break;
+                case 7:
+                    // leerOpcion retorna 7 cuando se termina la entrada por consola.
+                    return;
+                default:
+                    System.out.println("Opcion invalida.");
+            }
+        }
+    }
+
+    /**
+     * Cambia el paralelo de un alumno identificado por su RUT.
+     * Si ya pertenece al grupo, tambien actualiza su paralelo como miembro.
+     *
+     * @param teclado lector utilizado para recibir los datos ingresados
+     */
+    static void cambiarParalelo(Scanner teclado) {
+        System.out.print("Ingrese RUT del alumno: ");
+        String rut = leerTexto(teclado);
+
+        if (rut.isEmpty()) {
+            System.out.println("El RUT no puede estar vacio.");
+            return;
+        }
+
+        int posicionAlumno = buscarAlumnoPorRut(rut);
+
+        if (posicionAlumno == -1) {
+            System.out.println("No existe un alumno con ese RUT.");
+            return;
+        }
+
+        System.out.println("Alumno: " + nombresAlumnos[posicionAlumno] + " "
+                + apellidosAlumnos[posicionAlumno] + " (actualmente en "
+                + paralelosAlumnos[posicionAlumno] + ")");
+        System.out.print("Nuevo paralelo (C1/C2): ");
+        String nuevoParalelo = leerTexto(teclado).toUpperCase();
+
+        if (!esParaleloValido(nuevoParalelo)) {
+            System.out.println("El paralelo debe ser C1 o C2.");
+            return;
+        }
+
+        if (nuevoParalelo.equals(paralelosAlumnos[posicionAlumno])) {
+            System.out.println("El alumno ya pertenece a " + nuevoParalelo + ".");
+            return;
+        }
+
+        String paraleloAnterior = paralelosAlumnos[posicionAlumno];
+        paralelosAlumnos[posicionAlumno] = nuevoParalelo;
+
+        int posicionMiembro = buscarMiembroPorRut(rut);
+        if (posicionMiembro != -1) {
+            paralelosMiembros[posicionMiembro] = nuevoParalelo;
+        }
+
+        if (guardarAlumnos()) {
+            System.out.println("Paralelo actualizado y guardado en Alumnos.txt.");
+        } else {
+            paralelosAlumnos[posicionAlumno] = paraleloAnterior;
+            if (posicionMiembro != -1) {
+                paralelosMiembros[posicionMiembro] = paraleloAnterior;
+            }
+        }
+    }
+
+    /**
+     * Elimina de la lista a un alumno identificado por su RUT.
+     * Tambien lo elimina del grupo si habia sido admitido.
+     *
+     * @param teclado lector utilizado para recibir los datos ingresados
+     */
+    static void eliminarAlumno(Scanner teclado) {
+        System.out.print("Ingrese RUT del alumno que desea eliminar: ");
+        String rut = leerTexto(teclado);
+
+        if (rut.isEmpty()) {
+            System.out.println("El RUT no puede estar vacio.");
+            return;
+        }
+
+        int posicionAlumno = buscarAlumnoPorRut(rut);
+
+        if (posicionAlumno == -1) {
+            System.out.println("No existe un alumno con ese RUT.");
+            return;
+        }
+
+        String nombreCompleto = nombresAlumnos[posicionAlumno] + " "
+                + apellidosAlumnos[posicionAlumno];
+
+        for (int i = posicionAlumno; i < cantidadAlumnos - 1; i++) {
+            nombresAlumnos[i] = nombresAlumnos[i + 1];
+            apellidosAlumnos[i] = apellidosAlumnos[i + 1];
+            rutsAlumnos[i] = rutsAlumnos[i + 1];
+            paralelosAlumnos[i] = paralelosAlumnos[i + 1];
+        }
+
+        cantidadAlumnos--;
+        nombresAlumnos[cantidadAlumnos] = null;
+        apellidosAlumnos[cantidadAlumnos] = null;
+        rutsAlumnos[cantidadAlumnos] = null;
+        paralelosAlumnos[cantidadAlumnos] = null;
+
+        int posicionMiembro = buscarMiembroPorRut(rut);
+        if (posicionMiembro != -1) {
+            eliminarMiembro(posicionMiembro);
+        }
+
+        if (guardarAlumnos()) {
+            System.out.println(nombreCompleto + " fue eliminado del curso.");
+        }
+    }
+
+    /**
+     * Agrega un alumno nuevo a la lista, validando sus datos y su RUT.
+     * El alumno se guarda en el archivo, pero no se agrega automaticamente al grupo.
+     *
+     * @param teclado lector utilizado para recibir los datos ingresados
+     */
+    static void agregarAlumno(Scanner teclado) {
+        if (cantidadAlumnos == MAX) {
+            System.out.println("No hay espacio para inscribir mas alumnos.");
+            return;
+        }
+
+        System.out.print("Ingrese nombre: ");
+        String nombre = leerTexto(teclado);
+        System.out.print("Ingrese apellido: ");
+        String apellido = leerTexto(teclado);
+        System.out.print("Ingrese RUT: ");
+        String rut = leerTexto(teclado);
+        System.out.print("Ingrese paralelo (C1/C2): ");
+        String paralelo = leerTexto(teclado).toUpperCase();
+
+        if (nombre.isEmpty() || apellido.isEmpty() || rut.isEmpty() || paralelo.isEmpty()) {
+            System.out.println("Ningun dato puede estar vacio.");
+            return;
+        }
+
+        if (!esParaleloValido(paralelo)) {
+            System.out.println("El paralelo debe ser C1 o C2.");
+            return;
+        }
+
+        if (buscarAlumnoPorRut(rut) != -1) {
+            System.out.println("Ya existe un alumno con ese RUT.");
+            return;
+        }
+
+        nombresAlumnos[cantidadAlumnos] = nombre;
+        apellidosAlumnos[cantidadAlumnos] = apellido;
+        rutsAlumnos[cantidadAlumnos] = rut;
+        paralelosAlumnos[cantidadAlumnos] = paralelo;
+        cantidadAlumnos++;
+
+        if (guardarAlumnos()) {
+            System.out.println(nombre + " " + apellido + " fue inscrito en " + paralelo + ".");
+        } else {
+            cantidadAlumnos--;
+            nombresAlumnos[cantidadAlumnos] = null;
+            apellidosAlumnos[cantidadAlumnos] = null;
+            rutsAlumnos[cantidadAlumnos] = null;
+            paralelosAlumnos[cantidadAlumnos] = null;
+        }
+    }
+
+    /**
+     * Elimina un miembro y desplaza los elementos posteriores de sus vectores.
+     *
+     * @param posicion posicion del miembro que se eliminara
+     */
+    static void eliminarMiembro(int posicion) {
+        for (int i = posicion; i < cantidadMiembros - 1; i++) {
+            nombresMiembros[i] = nombresMiembros[i + 1];
+            apellidosMiembros[i] = apellidosMiembros[i + 1];
+            rutsMiembros[i] = rutsMiembros[i + 1];
+            paralelosMiembros[i] = paralelosMiembros[i + 1];
+        }
+
+        cantidadMiembros--;
+        nombresMiembros[cantidadMiembros] = null;
+        apellidosMiembros[cantidadMiembros] = null;
+        rutsMiembros[cantidadMiembros] = null;
+        paralelosMiembros[cantidadMiembros] = null;
+    }
+
+    /**
+     * Reescribe Alumnos.txt con los datos actuales de los vectores.
+     *
+     * @return true si el archivo se guardo correctamente; false si ocurrio un error
+     */
+    static boolean guardarAlumnos() {
+        File archivoAlumnos = new File("Alumnos.txt");
+
+        try {
+            BufferedWriter escritor = new BufferedWriter(new FileWriter(archivoAlumnos));
+
+            for (int i = 0; i < cantidadAlumnos; i++) {
+                escritor.write(nombresAlumnos[i] + ";" + apellidosAlumnos[i] + ";"
+                        + rutsAlumnos[i] + ";" + paralelosAlumnos[i]);
+                escritor.newLine();
+            }
+
+            escritor.close();
+            return true;
+        } catch (IOException e) {
+            System.out.println("No se pudieron guardar los cambios en Alumnos.txt.");
+            return false;
+        }
     }
 
     static void generarReportes() {
