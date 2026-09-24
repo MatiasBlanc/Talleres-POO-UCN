@@ -40,6 +40,11 @@ public class Main {
     static boolean archivosCargados = false;
     static boolean solicitudesProcesadas = false;
 
+    // Datos para el analisis estadistico
+    static int totalIntentosIngreso = 0;
+    static int cantidadIntentosRechazados = 0;
+    static int cantidadIntentosManuales = 0;
+
     /**
      * Ejecuta el menu principal del programa.
      *
@@ -123,6 +128,9 @@ public class Main {
         cantidadRechazados = 0;
         archivosCargados = false;
         solicitudesProcesadas = false;
+        totalIntentosIngreso = 0;
+        cantidadIntentosRechazados = 0;
+        cantidadIntentosManuales = 0;
 
         boolean alumnosLeidos = false;
         boolean solicitudesLeidas = false;
@@ -228,6 +236,7 @@ public class Main {
         System.out.println("Procesando solicitudes...");
 
         for (int i = 0; i < cantidadSolicitudes; i++) {
+            totalIntentosIngreso++;
             int posicionAlumno = buscarAlumnoPorNombre(
                     nombresSolicitudes[i], apellidosSolicitudes[i]);
 
@@ -248,6 +257,7 @@ public class Main {
                 }
             } else {
                 String nombreCompleto = nombresSolicitudes[i] + " " + apellidosSolicitudes[i];
+                cantidadIntentosRechazados++;
 
                 if (agregarRechazado(nombreCompleto)) {
                     rechazadosNuevos++;
@@ -293,11 +303,14 @@ public class Main {
                 return;
             }
 
+            totalIntentosIngreso++;
+            cantidadIntentosManuales++;
             int posicionAlumno = buscarAlumnoPorNombre(nombre, apellido);
 
             if (posicionAlumno != -1) {
                 inscribirAlumno(posicionAlumno);
             } else {
+                cantidadIntentosRechazados++;
                 agregarRechazado(nombre + " " + apellido);
                 System.out.println(nombre + " " + apellido
                         + " no pertenece a ningun paralelo del curso.");
@@ -311,11 +324,14 @@ public class Main {
                 return;
             }
 
+            totalIntentosIngreso++;
+            cantidadIntentosManuales++;
             int posicionAlumno = buscarAlumnoPorRut(rut);
 
             if (posicionAlumno != -1) {
                 inscribirAlumno(posicionAlumno);
             } else {
+                cantidadIntentosRechazados++;
                 agregarRechazado("Sin nombre registrado, RUT: " + rut);
                 System.out.println("El RUT " + rut
                         + " no pertenece a ningun paralelo del curso.");
@@ -815,7 +831,72 @@ public class Main {
         return version;
     }
 
+    /**
+     * Muestra el porcentaje de rechazos y otras metricas del estado actual.
+     */
     static void mostrarEstadisticas() {
-        System.out.println("Analisis estadistico...");
+        if (!archivosCargados) {
+            System.out.println("Primero debe cargar los archivos.");
+            return;
+        }
+
+        int alumnosC1 = 0;
+        int alumnosC2 = 0;
+        int miembrosC1 = 0;
+        int miembrosC2 = 0;
+
+        for (int i = 0; i < cantidadAlumnos; i++) {
+            if (paralelosAlumnos[i].equals("C1")) {
+                alumnosC1++;
+            } else {
+                alumnosC2++;
+            }
+        }
+
+        for (int i = 0; i < cantidadMiembros; i++) {
+            if (paralelosMiembros[i].equals("C1")) {
+                miembrosC1++;
+            } else {
+                miembrosC2++;
+            }
+        }
+
+        double porcentajeRechazados = 0;
+        if (totalIntentosIngreso > 0) {
+            porcentajeRechazados = cantidadIntentosRechazados * 100.0
+                    / totalIntentosIngreso;
+        }
+
+        double porcentajeAlumnosC1 = 0;
+        double porcentajeAlumnosC2 = 0;
+        if (cantidadAlumnos > 0) {
+            porcentajeAlumnosC1 = alumnosC1 * 100.0 / cantidadAlumnos;
+            porcentajeAlumnosC2 = alumnosC2 * 100.0 / cantidadAlumnos;
+        }
+
+        porcentajeRechazados = redondearPorcentaje(porcentajeRechazados);
+        porcentajeAlumnosC1 = redondearPorcentaje(porcentajeAlumnosC1);
+        porcentajeAlumnosC2 = redondearPorcentaje(porcentajeAlumnosC2);
+
+        System.out.println("--- Analisis estadistico ---");
+        System.out.println("Total de intentos de ingreso: " + totalIntentosIngreso);
+        System.out.println("Rechazados: " + cantidadIntentosRechazados + " ("
+                + porcentajeRechazados + "%)");
+        System.out.println("Intentos de inscripcion manual: " + cantidadIntentosManuales);
+        System.out.println("Miembros actuales por paralelo -> C1: " + miembrosC1
+                + " | C2: " + miembrosC2);
+        System.out.println("Alumnos del curso -> C1: " + alumnosC1 + " ("
+                + porcentajeAlumnosC1 + "%) | C2: " + alumnosC2 + " ("
+                + porcentajeAlumnosC2 + "%)");
+    }
+
+    /**
+     * Redondea un porcentaje a un decimal para facilitar su lectura.
+     *
+     * @param porcentaje valor que se desea redondear
+     * @return porcentaje redondeado a un decimal
+     */
+    static double redondearPorcentaje(double porcentaje) {
+        return Math.round(porcentaje * 10.0) / 10.0;
     }
 }
