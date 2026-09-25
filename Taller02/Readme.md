@@ -542,3 +542,28 @@ El programa **NO se puede caer bajo ninguna circunstancia.** Se probará explíc
 - martin.droguett@alumnos.ucn.cl
 - nicolas.rojas11@alumnos.ucn.cl
 - **Grupo de WhatsApp (preferido)**
+
+---
+
+## 10. Ejecución del programa
+
+### Requisitos
+
+- Java Development Kit (JDK) 17 o superior.
+- Una terminal ubicada en la carpeta del repositorio.
+
+### Clonar y compilar
+
+```bash
+git clone https://github.com/MatiasBlanc/Talleres-POO-UCN.git
+cd Talleres-POO-UCN/Taller02
+javac -d bin src/module-info.java src/taller02/Main.java src/taller02/domain/*.java src/taller02/manager/*.java
+```
+
+### Ejecutar
+
+El programa debe iniciarse desde la carpeta `Taller02` para que encuentre las rutas de `txts/`:
+
+```bash
+java --module-path bin --module taller02/taller02.Main
+```
