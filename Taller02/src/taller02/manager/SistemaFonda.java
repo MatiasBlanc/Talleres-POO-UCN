@@ -169,4 +169,85 @@ public class SistemaFonda {
     public Consumo[] getConsumos() {
         return consumos;
     }
+
+    /**
+     * Cuenta el total de choripanes en el sistema.
+     * @return cantidad de choripanes
+     */
+    public int contarChoripanes() {
+        int cuenta = 0;
+        for (int i = 0; i < cantidadConsumos; i++) {
+            if (consumos[i] instanceof Choripan) {
+                cuenta++;
+            }
+        }
+        return cuenta;
+    }
+
+    /**
+     * Cuenta el total de terremotos en el sistema.
+     * @return cantidad de terremotos
+     */
+    public int contarTerremotos() {
+        int cuenta = 0;
+        for (int i = 0; i < cantidadConsumos; i++) {
+            if (consumos[i] instanceof Terremoto) {
+                cuenta++;
+            }
+        }
+        return cuenta;
+    }
+
+    /**
+     * Muestra la tabla detallada de choripanes registrados con sus kilocalorias.
+     */
+    public void mostrarChoripanes() {
+        System.out.println("=============== CHORIPANES =================");
+        System.out.printf("  %-4s%-14s%-8s%-8s%-14s%-8s%n", "#", "Consumidor", "Largo", "Ancho", "Fecha", "KCal");
+        int cuenta = 0;
+        for (int i = 0; i < cantidadConsumos; i++) {
+            if (consumos[i] instanceof Choripan) {
+                cuenta++;
+                Choripan ch = (Choripan) consumos[i];
+                String largoStr = ((long) ch.getLargo() == ch.getLargo()) ? ((long) ch.getLargo() + " cm") : (ch.getLargo() + " cm");
+                String anchoStr = ((long) ch.getAncho() == ch.getAncho()) ? ((long) ch.getAncho() + " cm") : (ch.getAncho() + " cm");
+                System.out.printf("  %-4d%-14s%-8s%-8s%-14s%8.2f%n",
+                        cuenta,
+                        ch.getConsumidor(),
+                        largoStr,
+                        anchoStr,
+                        ch.getFecha(),
+                        ch.calcularKcal());
+            }
+        }
+        System.out.println("--------------------------------------------------");
+        System.out.println("  Total: " + cuenta + " choripanes registrados");
+        System.out.println("==================================================");
+    }
+
+    /**
+     * Muestra la tabla detallada de terremotos registrados con sus litros y kilocalorias.
+     */
+    public void mostrarTerremotos() {
+        System.out.println("=============== TERREMOTOS =================");
+        System.out.printf("  %-4s%-14s%-9s%-14s%-8s%n", "#", "Consumidor", "Litros", "Fecha", "KCal");
+        int cuenta = 0;
+        double sumaLitros = 0.0;
+        for (int i = 0; i < cantidadConsumos; i++) {
+            if (consumos[i] instanceof Terremoto) {
+                cuenta++;
+                Terremoto t = (Terremoto) consumos[i];
+                sumaLitros += t.getLitros();
+                System.out.printf("  %-4d%-14s%5.2f L   %-14s%8.2f%n",
+                        cuenta,
+                        t.getConsumidor(),
+                        t.getLitros(),
+                        t.getFecha(),
+                        t.calcularKcal());
+            }
+        }
+        System.out.println("--------------------------------------------------");
+        System.out.printf(java.util.Locale.US, "  Total: %d terremotos registrados (%.2f L)%n", cuenta, sumaLitros);
+        System.out.println("==================================================");
+    }
 }
