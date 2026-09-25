@@ -250,4 +250,179 @@ public class SistemaFonda {
         System.out.printf(java.util.Locale.US, "  Total: %d terremotos registrados (%.2f L)%n", cuenta, sumaLitros);
         System.out.println("==================================================");
     }
+
+    /**
+     * Guarda todos los consumos en memoria dentro del archivo Consumido.txt.
+     * @return true si se guardo con exito, false si ocurrio un error
+     */
+    public boolean guardarConsumidos() {
+        BufferedWriter bw = null;
+        try {
+            bw = new BufferedWriter(new FileWriter(this.rutaConsumido, false));
+            for (int i = 0; i < cantidadConsumos; i++) {
+                if (consumos[i] != null) {
+                    bw.write(consumos[i].aFormatoArchivo());
+                    bw.newLine();
+                }
+            }
+            return true;
+        } catch (IOException e) {
+            System.out.println(">> Error al guardar en \"" + this.rutaConsumido + "\": " + e.getMessage());
+            return false;
+        } finally {
+            if (bw != null) {
+                try {
+                    bw.close();
+                } catch (IOException e) {
+                    System.out.println(">> Error al cerrar el archivo: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Agrega un nuevo consumo de choripan y lo persiste en el archivo.
+     * @param consumidor nombre del consumidor
+     * @param largo largo en cm
+     * @param ancho ancho en cm
+     * @param fecha fecha en formato YYYY-MM-DD
+     * @return el objeto Choripan creado o null si se supero la capacidad
+     */
+    public Choripan agregarChoripan(String consumidor, double largo, double ancho, String fecha) {
+        if (cantidadConsumos >= CAPACIDAD_MAXIMA) {
+            System.out.println(">> Error: se alcanzo la capacidad maxima de registros (" + CAPACIDAD_MAXIMA + ").");
+            System.out.println("   No es posible agregar mas consumos.");
+            return null;
+        }
+        Choripan nuevo = new Choripan(consumidor, fecha, largo, ancho);
+        consumos[cantidadConsumos] = nuevo;
+        cantidadConsumos++;
+        guardarConsumidos();
+        return nuevo;
+    }
+
+    /**
+     * Agrega un nuevo consumo de terremoto y lo persiste en el archivo.
+     * @param consumidor nombre del consumidor
+     * @param litros litros de terremoto
+     * @param fecha fecha en formato YYYY-MM-DD
+     * @return el objeto Terremoto creado o null si se supero la capacidad
+     */
+    public Terremoto agregarTerremoto(String consumidor, double litros, String fecha) {
+        if (cantidadConsumos >= CAPACIDAD_MAXIMA) {
+            System.out.println(">> Error: se alcanzo la capacidad maxima de registros (" + CAPACIDAD_MAXIMA + ").");
+            System.out.println("   No es posible agregar mas consumos.");
+            return null;
+        }
+        Terremoto nuevo = new Terremoto(consumidor, fecha, litros);
+        consumos[cantidadConsumos] = nuevo;
+        cantidadConsumos++;
+        guardarConsumidos();
+        return nuevo;
+    }
+
+    /**
+     * Muestra la lista de choripanes para edicion o eliminacion.
+     */
+    public void mostrarChoripanesParaEdicion() {
+        System.out.printf("  %-4s%-14s%-8s%-8s%-14s%n", "#", "Consumidor", "Largo", "Ancho", "Fecha");
+        int cuenta = 0;
+        for (int i = 0; i < cantidadConsumos; i++) {
+            if (consumos[i] instanceof Choripan) {
+                cuenta++;
+                Choripan ch = (Choripan) consumos[i];
+                String largoStr = ((long) ch.getLargo() == ch.getLargo()) ? ((long) ch.getLargo() + " cm") : (ch.getLargo() + " cm");
+                String anchoStr = ((long) ch.getAncho() == ch.getAncho()) ? ((long) ch.getAncho() + " cm") : (ch.getAncho() + " cm");
+                System.out.printf("  %-4d%-14s%-8s%-8s%-14s%n",
+                        cuenta,
+                        ch.getConsumidor(),
+                        largoStr,
+                        anchoStr,
+                        ch.getFecha());
+            }
+        }
+    }
+
+    /**
+     * Muestra la lista de terremotos para edicion o eliminacion.
+     */
+    public void mostrarTerremotosParaEdicion() {
+        System.out.printf("  %-4s%-14s%-9s%-14s%n", "#", "Consumidor", "Litros", "Fecha");
+        int cuenta = 0;
+        for (int i = 0; i < cantidadConsumos; i++) {
+            if (consumos[i] instanceof Terremoto) {
+                cuenta++;
+                Terremoto t = (Terremoto) consumos[i];
+                System.out.printf(java.util.Locale.US, "  %-4d%-14s%5.2f L   %-14s%n",
+                        cuenta,
+                        t.getConsumidor(),
+                        t.getLitros(),
+                        t.getFecha());
+            }
+        }
+    }
+
+    /**
+     * Obtiene el Choripan en la posicion 1-indexada dentro de los choripanes.
+     * @param indice 1-indexado
+     * @return Choripan encontrado o null
+     */
+    public Choripan obtenerChoripan(int indice) {
+        int cuenta = 0;
+        for (int i = 0; i < cantidadConsumos; i++) {
+            if (consumos[i] instanceof Choripan) {
+                cuenta++;
+                if (cuenta == indice) {
+                    return (Choripan) consumos[i];
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Obtiene el Terremoto en la posicion 1-indexada dentro de los terremotos.
+     * @param indice 1-indexado
+     * @return Terremoto encontrado o null
+     */
+    public Terremoto obtenerTerremoto(int indice) {
+        int cuenta = 0;
+        for (int i = 0; i < cantidadConsumos; i++) {
+            if (consumos[i] instanceof Terremoto) {
+                cuenta++;
+                if (cuenta == indice) {
+                    return (Terremoto) consumos[i];
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Elimina un consumo del arreglo estatico y persiste los cambios.
+     * Desplaza los elementos para evitar huecos en el vector.
+     * @param consumo consumo a eliminar
+     * @return true si se elimino con exito
+     */
+    public boolean eliminarConsumo(Consumo consumo) {
+        int posicion = -1;
+        for (int i = 0; i < cantidadConsumos; i++) {
+            if (consumos[i] == consumo) {
+                posicion = i;
+                break;
+            }
+        }
+        if (posicion == -1) {
+            return false;
+        }
+
+        for (int i = posicion; i < cantidadConsumos - 1; i++) {
+            consumos[i] = consumos[i + 1];
+        }
+        consumos[cantidadConsumos - 1] = null;
+        cantidadConsumos--;
+
+        guardarConsumidos();
+        return true;
+    }
 }
