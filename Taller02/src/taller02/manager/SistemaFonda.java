@@ -425,4 +425,202 @@ public class SistemaFonda {
         guardarConsumidos();
         return true;
     }
+
+    /**
+     * Retorna un arreglo con los nombres de todos los usuarios registrados (participantes y consumidores).
+     * @return arreglo de nombres unicos
+     */
+    public String[] obtenerUsuariosUnicos() {
+        String[] usuarios = new String[CAPACIDAD_MAXIMA];
+        int cuenta = 0;
+
+        // Primero agregar participantes
+        for (int i = 0; i < cantidadParticipantes; i++) {
+            String nombre = participantes[i].getName();
+            boolean existe = false;
+            for (int j = 0; j < cuenta; j++) {
+                if (usuarios[j].equalsIgnoreCase(nombre)) {
+                    existe = true;
+                    break;
+                }
+            }
+            if (!existe && cuenta < CAPACIDAD_MAXIMA) {
+                usuarios[cuenta] = nombre;
+                cuenta++;
+            }
+        }
+
+        // Agregar consumidores que quiza no estaban en participantes
+        for (int i = 0; i < cantidadConsumos; i++) {
+            String nombre = consumos[i].getConsumidor();
+            boolean existe = false;
+            for (int j = 0; j < cuenta; j++) {
+                if (usuarios[j].equalsIgnoreCase(nombre)) {
+                    existe = true;
+                    break;
+                }
+            }
+            if (!existe && cuenta < CAPACIDAD_MAXIMA) {
+                usuarios[cuenta] = nombre;
+                cuenta++;
+            }
+        }
+
+        String[] resultado = new String[cuenta];
+        for (int i = 0; i < cuenta; i++) {
+            resultado[i] = usuarios[i];
+        }
+        return resultado;
+    }
+
+    /**
+     * Muestra el total de choripanes consumidos.
+     */
+    public void mostrarTotalChoripanes() {
+        System.out.println(">> Total de choripanes comidos: " + contarChoripanes());
+    }
+
+    /**
+     * Muestra el total de terremotos tomados y la suma de litros.
+     */
+    public void mostrarTotalTerremotos() {
+        int cuenta = 0;
+        double litros = 0.0;
+        for (int i = 0; i < cantidadConsumos; i++) {
+            if (consumos[i] instanceof Terremoto) {
+                cuenta++;
+                litros += ((Terremoto) consumos[i]).getLitros();
+            }
+        }
+        System.out.printf(java.util.Locale.US, ">> Total de terremotos tomados: %d  (%.2f litros en total)%n", cuenta, litros);
+    }
+
+    /**
+     * Muestra la tabla de choripanes consumidos por cada usuario.
+     */
+    public void mostrarChoripanesPorUsuario() {
+        String[] usuarios = obtenerUsuariosUnicos();
+        System.out.println("======= CHORIPANES POR USUARIO =============");
+        System.out.printf("  %-14s%8s%n", "Usuario", "Cantidad");
+        for (int i = 0; i < usuarios.length; i++) {
+            String u = usuarios[i];
+            int cantidad = 0;
+            for (int j = 0; j < cantidadConsumos; j++) {
+                if (consumos[j] instanceof Choripan && consumos[j].getConsumidor().equalsIgnoreCase(u)) {
+                    cantidad++;
+                }
+            }
+            System.out.printf("  %-14s%8d%n", u, cantidad);
+        }
+        System.out.println("============================================");
+    }
+
+    /**
+     * Muestra la tabla de terremotos consumidos y litros por cada usuario.
+     */
+    public void mostrarTerremotosPorUsuario() {
+        String[] usuarios = obtenerUsuariosUnicos();
+        System.out.println("======= TERREMOTOS POR USUARIO =============");
+        System.out.printf("  %-14s%8s%10s%n", "Usuario", "Cantidad", "Litros");
+        for (int i = 0; i < usuarios.length; i++) {
+            String u = usuarios[i];
+            int cantidad = 0;
+            double litros = 0.0;
+            for (int j = 0; j < cantidadConsumos; j++) {
+                if (consumos[j] instanceof Terremoto && consumos[j].getConsumidor().equalsIgnoreCase(u)) {
+                    cantidad++;
+                    litros += ((Terremoto) consumos[j]).getLitros();
+                }
+            }
+            System.out.printf(java.util.Locale.US, "  %-14s%8d%8.2f L%n", u, cantidad, litros);
+        }
+        System.out.println("============================================");
+    }
+
+    /**
+     * Muestra la tabla de KCal consumidas por cada usuario y el total de la fonda.
+     */
+    public void mostrarKcalPorUsuario() {
+        String[] usuarios = obtenerUsuariosUnicos();
+        System.out.println("============ KCAL POR USUARIO ==============");
+        System.out.printf("  %-14s%10s%13s%9s%n", "Usuario", "Choripan", "Terremoto", "Total");
+        double totalFonda = 0.0;
+        for (int i = 0; i < usuarios.length; i++) {
+            String u = usuarios[i];
+            double kcalChori = 0.0;
+            double kcalTerre = 0.0;
+            for (int j = 0; j < cantidadConsumos; j++) {
+                if (consumos[j].getConsumidor().equalsIgnoreCase(u)) {
+                    if (consumos[j] instanceof Choripan) {
+                        kcalChori += consumos[j].calcularKcal();
+                    } else if (consumos[j] instanceof Terremoto) {
+                        kcalTerre += consumos[j].calcularKcal();
+                    }
+                }
+            }
+            double totalUsuario = kcalChori + kcalTerre;
+            totalFonda += totalUsuario;
+            System.out.printf(java.util.Locale.US, "  %-14s%10.2f%13.2f%9.2f%n", u, kcalChori, kcalTerre, totalUsuario);
+        }
+        System.out.println("--------------------------------------------");
+        System.out.printf(java.util.Locale.US, "  Consumo total de la fonda: %.2f kcal%n", totalFonda);
+        System.out.println("============================================");
+    }
+
+    /**
+     * Muestra los dias ebrios por usuario (2 o mas litros en una misma fecha).
+     */
+    public void mostrarDiasEbrioPorUsuario() {
+        String[] usuarios = obtenerUsuariosUnicos();
+        System.out.println("========= DIAS EBRIO POR USUARIO ===========");
+        System.out.println("  (se cuenta un dia ebrio con 2 L o mas en la misma fecha)\n");
+        System.out.printf("  %-14s%-12s %s%n", "Usuario", "Dias ebrio", "Detalle");
+        for (int i = 0; i < usuarios.length; i++) {
+            String u = usuarios[i];
+            // Agrupar litros por fecha para este usuario
+            String[] fechas = new String[CAPACIDAD_MAXIMA];
+            double[] litrosFecha = new double[CAPACIDAD_MAXIMA];
+            int cantidadFechas = 0;
+
+            for (int j = 0; j < cantidadConsumos; j++) {
+                if (consumos[j] instanceof Terremoto && consumos[j].getConsumidor().equalsIgnoreCase(u)) {
+                    Terremoto t = (Terremoto) consumos[j];
+                    String f = t.getFecha();
+                    int indiceFecha = -1;
+                    for (int k = 0; k < cantidadFechas; k++) {
+                        if (fechas[k].equals(f)) {
+                            indiceFecha = k;
+                            break;
+                        }
+                    }
+                    if (indiceFecha != -1) {
+                        litrosFecha[indiceFecha] += t.getLitros();
+                    } else if (cantidadFechas < CAPACIDAD_MAXIMA) {
+                        fechas[cantidadFechas] = f;
+                        litrosFecha[cantidadFechas] = t.getLitros();
+                        cantidadFechas++;
+                    }
+                }
+            }
+
+            int diasEbrio = 0;
+            String detalle = "";
+            for (int k = 0; k < cantidadFechas; k++) {
+                if (litrosFecha[k] >= 2.0) {
+                    diasEbrio++;
+                    if (!detalle.isEmpty()) {
+                        detalle += ", ";
+                    }
+                    detalle += fechas[k] + " (" + String.format(java.util.Locale.US, "%.2f L", litrosFecha[k]) + ")";
+                }
+            }
+
+            if (diasEbrio == 0) {
+                detalle = "-";
+            }
+
+            System.out.printf("  %-14s%10d   %s%n", u, diasEbrio, detalle);
+        }
+        System.out.println("============================================");
+    }
 }
