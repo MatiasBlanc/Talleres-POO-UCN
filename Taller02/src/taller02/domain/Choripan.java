@@ -1,9 +1,5 @@
 package taller02.domain;
 
-/**
- * Representa el consumo de un choripan en la fonda.
- * Aplica la formula de kilocalorias: (Largo * Ancho) / 3.
- */
 public class Choripan extends Consumo {
     private double largo;
     private double ancho;
@@ -21,10 +17,9 @@ public class Choripan extends Consumo {
 
     @Override
     public String aFormatoArchivo() {
-        // Formato para Consumido.txt: Choripan;Consumidor;Largo;Ancho;Fecha
-        String largoStr = (largo == (long) largo) ? String.valueOf((long) largo) : String.valueOf(largo);
-        String anchoStr = (ancho == (long) ancho) ? String.valueOf((long) ancho) : String.valueOf(ancho);
-        return "Choripan;" + getConsumidor() + ";" + largoStr + ";" + anchoStr + ";" + getFecha();
+        String l = (largo == (int) largo) ? String.valueOf((int) largo) : String.valueOf(largo);
+        String a = (ancho == (int) ancho) ? String.valueOf((int) ancho) : String.valueOf(ancho);
+        return "Choripan;" + getConsumidor() + ";" + l + ";" + a + ";" + getFecha();
     }
 
     @Override

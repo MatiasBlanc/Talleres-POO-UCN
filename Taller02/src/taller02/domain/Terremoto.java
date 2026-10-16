@@ -1,9 +1,5 @@
 package taller02.domain;
 
-/**
- * Representa el consumo de un terremoto en la fonda.
- * Aplica la formula de kilocalorias: (Litros * 10) / 3.
- */
 public class Terremoto extends Consumo {
     private double litros;
 
@@ -19,9 +15,8 @@ public class Terremoto extends Consumo {
 
     @Override
     public String aFormatoArchivo() {
-        // Formato para Consumido.txt: Terremoto;Consumidor;Litros;Fecha
-        String litrosStr = (litros == (long) litros) ? String.valueOf((long) litros) : String.valueOf(litros);
-        return "Terremoto;" + getConsumidor() + ";" + litrosStr + ";" + getFecha();
+        String lit = (litros == (int) litros) ? String.valueOf((int) litros) : String.valueOf(litros);
+        return "Terremoto;" + getConsumidor() + ";" + lit + ";" + getFecha();
     }
 
     @Override
