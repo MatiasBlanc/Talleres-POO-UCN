@@ -1,0 +1,13 @@
+# Eclipse y compilación
+.metadata/
+**/.metadata/
+bin/
+**/bin/
+*.class
+
+# Logs temporales
+*.log
+hs_err_pid*
+
+# Enlace de compatibilidad local en la raíz
+/Taller03
