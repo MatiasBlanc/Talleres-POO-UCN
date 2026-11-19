@@ -556,7 +556,7 @@ El programa **NO se puede caer bajo ninguna circunstancia.** Se probará explíc
 
 ```bash
 git clone https://github.com/MatiasBlanc/Talleres-POO-UCN.git
-cd Talleres-POO-UCN/Taller02
+cd Talleres-POO-UCN/talleres/Taller02
 javac -d bin src/module-info.java src/taller02/Main.java src/taller02/domain/*.java src/taller02/manager/*.java
 ```
 

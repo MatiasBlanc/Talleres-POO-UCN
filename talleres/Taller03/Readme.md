@@ -550,7 +550,7 @@ El programa **NO se puede caer bajo ninguna circunstancia.** Se probará explíc
 
 ```bash
 git clone https://github.com/MatiasBlanc/Talleres-POO-UCN.git
-cd Talleres-POO-UCN/Taller03
+cd Talleres-POO-UCN/talleres/Taller03
 ```
 
 ### Compilar y ejecutar
