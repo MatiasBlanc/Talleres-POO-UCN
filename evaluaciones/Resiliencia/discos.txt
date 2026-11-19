@@ -1,0 +1,17 @@
+1,Dookie,Green Day,1,1,1
+2,American Idiot,Green Day,1,1,2
+3,21st Century Breakdown,Green Day,1,1,3
+4,Hybrid Theory,Linkin Park,2,4,5
+5,Meteora,Linkin Park,3,2,2
+6,Minutes to Midnight,Linkin Park,2,5,10
+7,Thriller,Michael Jackson,1,4,7
+8,Bad,Michael Jackson,1,2,10
+9,Dangerous,Michael Jackson,2,2,10
+10,21,Adele,1,5,6
+11,25,Adele,3,5,9
+12,El Mal Querer,Rosalía,2,1,1
+13,Motomami,Rosalía,2,1,9
+14,Laundry Service,Shakira,3,1,10
+15,El Dorado,Shakira,4,2,8
+16,Muérdete la Lengua,Francisca Valenzuela,2,4,10
+17,La Fortaleza,Francisca Valenzuela,2,1,3
