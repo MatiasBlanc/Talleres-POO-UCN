@@ -569,4 +569,4 @@ En Eclipse, abrir el proyecto `taller3` y ejecutar `taller3.Main`. El directorio
 
 ### Diagrama UML
 
-El diagrama de clases está en [`diagrama-clases.pdf`](diagrama-clases.pdf) y [`diagrama-clases.png`](diagrama-clases.png).
+El diagrama de clases está en [`diagrama-clases.pdf`](diagrama-clases.pdf).
