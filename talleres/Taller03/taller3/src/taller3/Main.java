@@ -19,7 +19,7 @@ public class Main {
         try {
             ejecutar(scanner);
         } catch (Exception e) {
-            System.out.println("[!] Se produjo un error inesperado. El programa termina de forma controlada.");
+            System.out.println("[!] Se produjo un error inesperado.");
         } finally {
             scanner.close();
         }
@@ -59,7 +59,14 @@ public class Main {
                 if (numeroLinea == 1 && linea.startsWith("\uFEFF")) {
                     linea = linea.substring(1);
                 }
-                procesarLineaMonstruo(archivo, sistema, numeroLinea, linea);
+                if (linea.trim().isEmpty()) {
+                    continue;
+                }
+                String motivo = sistema.registrarMonstruo(linea.split(";", -1));
+                if (motivo != null) {
+                    System.out.println("[!] Línea " + numeroLinea + " de " + archivo.getName()
+                            + " descartada: \"" + linea.trim() + "\" (" + motivo + ").");
+                }
             }
         } catch (FileNotFoundException e) {
             System.out.println("[!] No se pudo abrir Monstruos.txt. El programa no puede continuar.");
@@ -72,17 +79,6 @@ public class Main {
             return false;
         }
         return true;
-    }
-
-    private static void procesarLineaMonstruo(File archivo, Sistema sistema, int numeroLinea, String linea) {
-        try {
-            String motivo = sistema.registrarMonstruo(linea.split(";", -1));
-            if (motivo != null) {
-                informarDescarte(archivo, numeroLinea, linea, motivo);
-            }
-        } catch (RuntimeException e) {
-            informarDescarte(archivo, numeroLinea, linea, "error inesperado");
-        }
     }
 
     private static void cargarRegistros(File archivo, Sistema sistema) {
@@ -99,7 +95,14 @@ public class Main {
                 if (numeroLinea == 1 && linea.startsWith("\uFEFF")) {
                     linea = linea.substring(1);
                 }
-                procesarLineaRegistro(archivo, sistema, numeroLinea, linea);
+                if (linea.trim().isEmpty()) {
+                    continue;
+                }
+                String motivo = sistema.registrarJugador(linea.split(";", -1));
+                if (motivo != null) {
+                    System.out.println("[!] Línea " + numeroLinea + " de " + archivo.getName()
+                            + " descartada: \"" + linea.trim() + "\" (" + motivo + ").");
+                }
             }
         } catch (FileNotFoundException e) {
             System.out.println(" > No se pudo leer Registros.txt. Se iniciará sin jugadores.");
@@ -107,23 +110,6 @@ public class Main {
         }
 
         System.out.println(" > " + sistema.cantidadJugadores() + " jugadores cargados desde " + archivo.getName());
-    }
-
-    private static void procesarLineaRegistro(File archivo, Sistema sistema, int numeroLinea, String linea) {
-        try {
-            String motivo = sistema.registrarJugador(linea.split(";", -1));
-            if (motivo != null) {
-                informarDescarte(archivo, numeroLinea, linea, motivo);
-            }
-        } catch (RuntimeException e) {
-            informarDescarte(archivo, numeroLinea, linea, "error inesperado");
-        }
-    }
-
-    private static void informarDescarte(File archivo, int numeroLinea, String linea, String motivo) {
-        String visible = linea == null ? "" : linea.trim();
-        System.out.println("[!] Línea " + numeroLinea + " de " + archivo.getName()
-                + " descartada: \"" + visible + "\" (" + motivo + ").");
     }
 
     private static boolean solicitarUsuario(Scanner scanner, Sistema sistema) {
@@ -199,26 +185,26 @@ public class Main {
 
         while (true) {
             mostrarMinijuegos(sistema);
-            int opcion = leerEntero(scanner);
-            if (opcion <= 0) {
-                sistema.cancelarSeleccionMinijuego();
+            int opcionMinijuego = leerEntero(scanner);
+            if (opcionMinijuego == 0) {
                 return;
             }
-
-            String error = sistema.seleccionarMinijuego(opcion - 1);
-            if (error != null) {
-                System.out.println(error);
+            if (opcionMinijuego < 1 || opcionMinijuego > sistema.cantidadMinijuegos()) {
+                System.out.println("[!] Opción fuera de rango. Intente nuevamente.");
                 continue;
             }
-            if (elegirMonstruo(scanner, sistema)) {
-                sistema.cancelarSeleccionMinijuego();
+            if (sistema.isMinijuegoJugado(opcionMinijuego - 1)) {
+                System.out.println("[!] Ya jugaste " + sistema.getNombreMinijuego(opcionMinijuego - 1) + " en esta sesión.");
+                continue;
+            }
+
+            if (elegirMonstruo(scanner, sistema, opcionMinijuego - 1)) {
                 return;
             }
-            sistema.cancelarSeleccionMinijuego();
         }
     }
 
-    private static boolean elegirMonstruo(Scanner scanner, Sistema sistema) {
+    private static boolean elegirMonstruo(Scanner scanner, Sistema sistema, int idxMinijuego) {
         while (true) {
             if (sistema.cantidadMonstruosDisponibles() == 0) {
                 System.out.println("No quedan monstruos disponibles.");
@@ -226,7 +212,7 @@ public class Main {
             }
 
             System.out.println();
-            System.out.println(sistema.getNombreMinijuegoEnCurso() + ": " + sistema.getDescripcionMinijuegoEnCurso());
+            System.out.println(sistema.getNombreMinijuego(idxMinijuego) + ": " + sistema.getDescripcionMinijuego(idxMinijuego));
             System.out.println();
             System.out.println("Elige el monstruo en el que te transformarás:");
             int cantidad = sistema.cantidadMonstruosDisponibles();
@@ -236,43 +222,41 @@ public class Main {
             System.out.println("0) Volver");
             System.out.print("> ");
 
-            int opcion = leerEntero(scanner);
-            if (opcion <= 0) {
+            int opcionMonstruo = leerEntero(scanner);
+            if (opcionMonstruo == 0) {
                 return false;
             }
-
-            String error = sistema.seleccionarMonstruoDisponible(opcion - 1);
-            if (error != null) {
-                System.out.println(error);
+            if (opcionMonstruo < 1 || opcionMonstruo > cantidad) {
+                System.out.println("[!] Opción fuera de rango. Intente nuevamente.");
                 continue;
             }
 
+            int idxMonstruo = opcionMonstruo - 1;
             System.out.println();
             System.out.println("Te comes un dulce de dudosa procedencia...");
-            System.out.println("Potencial para " + sistema.getNombreMinijuegoEnCurso()
-                    + ": " + formatearDecimal(sistema.getPotencialEnCurso()));
+            System.out.println("Potencial para " + sistema.getNombreMinijuego(idxMinijuego)
+                    + ": " + formatearDecimal(sistema.calcularPotencial(idxMinijuego, idxMonstruo)));
             System.out.println();
 
-            if (elegirHabilidad(scanner, sistema)) {
+            if (elegirHabilidad(scanner, sistema, idxMinijuego, idxMonstruo)) {
                 return true;
             }
-            sistema.cancelarSeleccionMonstruo();
         }
     }
 
-    private static boolean elegirHabilidad(Scanner scanner, Sistema sistema) {
+    private static boolean elegirHabilidad(Scanner scanner, Sistema sistema, int idxMinijuego, int idxMonstruo) {
         while (true) {
             System.out.println("¿Quieres usar una habilidad?");
-            int cantidad = sistema.cantidadHabilidadesEnCurso();
+            int cantidad = sistema.cantidadHabilidades(idxMonstruo);
             for (int i = 0; i < cantidad; i++) {
-                System.out.println((i + 1) + ") " + sistema.getNombreHabilidadEnCurso(i));
+                System.out.println((i + 1) + ") " + sistema.getNombreHabilidad(idxMonstruo, i));
             }
             System.out.println((cantidad + 1) + ") No usar habilidad");
             System.out.println("0) Volver");
             System.out.print("> ");
 
             int opcion = leerEntero(scanner);
-            if (opcion <= 0) {
+            if (opcion == 0) {
                 return false;
             }
             if (opcion < 1 || opcion > cantidad + 1) {
@@ -280,23 +264,16 @@ public class Main {
                 continue;
             }
 
-            int indiceHabilidad = opcion == cantidad + 1 ? 0 : opcion;
-            ResultadoJugada resultado = sistema.confirmarJugada(indiceHabilidad);
-            if (!resultado.isExito()) {
-                System.out.println(resultado.getMensajeError());
-                continue;
-            }
-
+            int opcionHabilidad = (opcion == cantidad + 1) ? 0 : opcion;
+            ResultadoJugada resultado = sistema.jugar(idxMinijuego, idxMonstruo, opcionHabilidad);
             mostrarResultadoJugada(resultado);
             return true;
         }
     }
 
     private static void mostrarResultadoJugada(ResultadoJugada resultado) {
-        if (resultado.isUsoHabilidad()) {
-            if (resultado.getMensajeHabilidad() != null && !resultado.getMensajeHabilidad().isEmpty()) {
-                System.out.println(resultado.getMensajeHabilidad());
-            }
+        if (resultado.getMensajeHabilidad() != null && !resultado.getMensajeHabilidad().isEmpty()) {
+            System.out.println(resultado.getMensajeHabilidad());
             if (resultado.isEfectiva()) {
                 System.out.println("¡La habilidad fue efectiva! Puntaje x1.5");
             } else {
@@ -354,11 +331,11 @@ public class Main {
     private static void cerrarSesion(Sistema sistema, File archivoRegistros, boolean salirPrograma) {
         ResultadoSesion resultado = sistema.terminarSesion();
         System.out.println();
-        if (!resultado.isJugoAlMenosUno()) {
+        if (!resultado.isJugo()) {
             System.out.println("No jugaste ningún minijuego, no se guardó registro.");
         } else {
             System.out.println("Sesión terminada. Puntaje total: " + resultado.getPuntajeTotal() + " puntos.");
-            if (resultado.isJugadorNuevo()) {
+            if (resultado.isNuevo()) {
                 System.out.println("¡Quedaste registrado con " + resultado.getPuntajeTotal() + " puntos!");
             } else if (resultado.isSuperoRecord()) {
                 System.out.println("¡Felicitaciones! Superaste tu récord (" + resultado.getRecordAnterior()
@@ -367,10 +344,8 @@ public class Main {
                 System.out.println("No superaste tu récord (" + resultado.getRecordAnterior()
                         + "). ¡Suerte para la próxima!");
             }
-            if (resultado.isDebeGuardar()) {
-                if (guardarRegistros(archivoRegistros, sistema)) {
-                    System.out.println("Registros guardados en " + archivoRegistros.getName() + ".");
-                }
+            if (guardarRegistros(archivoRegistros, sistema)) {
+                System.out.println("Registros guardados en " + archivoRegistros.getName() + ".");
             }
         }
         if (salirPrograma) {
@@ -466,9 +441,13 @@ public class Main {
         if (directo.exists()) {
             return directo;
         }
-        File enProyecto = new File("taller3", "Monstruos.txt");
+        File enProyecto = new File("talleres/Taller03/taller3", "Monstruos.txt");
         if (enProyecto.exists()) {
             return enProyecto;
+        }
+        File enTaller = new File("taller3", "Monstruos.txt");
+        if (enTaller.exists()) {
+            return enTaller;
         }
         return directo;
     }

@@ -25,50 +25,28 @@ public class Sistema {
     private final ArrayList<Monstruo> monstruos = new ArrayList<>();
     private final ArrayList<Jugador> jugadores = new ArrayList<>();
     private final ArrayList<Minijuego> minijuegos = new ArrayList<>();
-    private final ArrayList<Boolean> minijuegoJugado = new ArrayList<>();
-    private final ArrayList<Integer> puntajesMinijuego = new ArrayList<>();
+    private final boolean[] minijuegosJugados = new boolean[4];
+    private final int[] puntajesMinijuegos = new int[4];
     private final ArrayList<Monstruo> monstruosUsados = new ArrayList<>();
     private final LinkedList<EntradaHistorial> historial = new LinkedList<>();
-    private final ArrayList<Habilidad> habilidadesEnCurso = new ArrayList<>();
 
     private String nombreSesion = "";
     private Jugador jugadorActual;
-    private boolean jugadorExistia;
-    private boolean sesionActiva;
     private int puntajeSesion;
-    private int minijuegoEnCurso = -1;
-    private int monstruoEnCurso = -1;
-    private double potencialEnCurso;
 
     public Sistema() {
         minijuegos.add(new CarreraCementerio());
         minijuegos.add(new CazaCalabazas());
         minijuegos.add(new LanzamientoLapidas());
         minijuegos.add(new SobrevivirAmanecer());
-        for (int i = 0; i < minijuegos.size(); i++) {
-            minijuegoJugado.add(false);
-            puntajesMinijuego.add(0);
-        }
     }
 
     public String registrarMonstruo(String[] partes) {
-        if (partes == null || partes.length == 0) {
+        if (partes == null || partes.length < 6) {
             return "cantidad incorrecta de campos";
         }
 
-        String[] campos = new String[partes.length];
-        boolean hayContenido = false;
-        for (int i = 0; i < partes.length; i++) {
-            campos[i] = partes[i] == null ? "" : partes[i].trim();
-            if (!campos[i].isEmpty()) {
-                hayContenido = true;
-            }
-        }
-        if (!hayContenido) {
-            return campos.length <= 1 ? "línea vacía" : "tipo desconocido";
-        }
-
-        String tipo = campos[0];
+        String tipo = partes[0].trim();
         int esperados;
         switch (tipo) {
             case "Zombi":
@@ -82,14 +60,14 @@ public class Sistema {
             default:
                 return "tipo desconocido";
         }
-        if (campos.length != esperados) {
+        if (partes.length != esperados) {
             return "cantidad incorrecta de campos";
         }
 
-        int[] valores = new int[campos.length - 1];
-        for (int i = 1; i < campos.length; i++) {
+        int[] valores = new int[partes.length - 1];
+        for (int i = 1; i < partes.length; i++) {
             try {
-                valores[i - 1] = Integer.parseInt(campos[i]);
+                valores[i - 1] = Integer.parseInt(partes[i].trim());
             } catch (NumberFormatException e) {
                 return "valor no numérico";
             }
@@ -143,30 +121,18 @@ public class Sistema {
             return "cantidad incorrecta de campos";
         }
 
-        String nombre = partes[0] == null ? "" : partes[0].trim();
-        String puntajeTexto = partes[1] == null ? "" : partes[1].trim();
+        String nombre = partes[0].trim();
         if (nombre.isEmpty()) {
             return "nombre vacío";
         }
-        if (nombre.indexOf(';') >= 0) {
-            return "nombre inválido";
-        }
 
-        int puntaje;
         try {
-            puntaje = Integer.parseInt(puntajeTexto);
+            int puntaje = Integer.parseInt(partes[1].trim());
+            jugadores.add(new Jugador(nombre, puntaje));
+            return null;
         } catch (NumberFormatException e) {
             return "valor no numérico";
         }
-        if (puntaje < 0) {
-            return "valor fuera de rango";
-        }
-        if (buscarJugador(nombre) != null) {
-            return "jugador duplicado";
-        }
-
-        jugadores.add(new Jugador(nombre, puntaje));
-        return null;
     }
 
     public int cantidadMonstruos() {
@@ -189,27 +155,25 @@ public class Sistema {
     }
 
     public boolean iniciarSesion(String nombre) {
-        limpiarSesion();
-        nombreSesion = nombre == null ? "" : nombre.trim();
+        puntajeSesion = 0;
+        historial.clear();
+        monstruosUsados.clear();
+        for (int i = 0; i < minijuegosJugados.length; i++) {
+            minijuegosJugados[i] = false;
+            puntajesMinijuegos[i] = 0;
+        }
+
+        nombreSesion = nombre.trim();
         jugadorActual = buscarJugador(nombreSesion);
-        jugadorExistia = jugadorActual != null;
-        sesionActiva = true;
-        return jugadorExistia;
+        return jugadorActual != null;
     }
 
     public String getNombreSesion() {
         return nombreSesion;
     }
 
-    public boolean isJugadorConocido() {
-        return jugadorExistia;
-    }
-
     public int getRecordActual() {
-        if (jugadorActual == null) {
-            return 0;
-        }
-        return jugadorActual.getPuntaje();
+        return jugadorActual == null ? 0 : jugadorActual.getPuntaje();
     }
 
     public int cantidadMinijuegos() {
@@ -217,55 +181,37 @@ public class Sistema {
     }
 
     public String getNombreMinijuego(int indice) {
-        Minijuego minijuego = minijuegoSeguro(indice);
-        return minijuego == null ? "" : minijuego.getNombre();
+        if (indice >= 0 && indice < minijuegos.size()) {
+            return minijuegos.get(indice).getNombre();
+        }
+        return "";
+    }
+
+    public String getDescripcionMinijuego(int indice) {
+        if (indice >= 0 && indice < minijuegos.size()) {
+            return minijuegos.get(indice).getDescripcion();
+        }
+        return "";
     }
 
     public boolean isMinijuegoJugado(int indice) {
-        if (indice >= 0 && indice < minijuegoJugado.size()) {
-            return minijuegoJugado.get(indice);
+        if (indice >= 0 && indice < minijuegosJugados.length) {
+            return minijuegosJugados[indice];
         }
         return false;
     }
 
     public int getPuntajeMinijuego(int indice) {
-        if (indice >= 0 && indice < puntajesMinijuego.size()) {
-            return puntajesMinijuego.get(indice);
+        if (indice >= 0 && indice < puntajesMinijuegos.length) {
+            return puntajesMinijuegos[indice];
         }
         return 0;
     }
 
-    public String seleccionarMinijuego(int indice) {
-        if (minijuegoSeguro(indice) == null) {
-            return "[!] Opción fuera de rango. Intente nuevamente.";
-        }
-        if (isMinijuegoJugado(indice)) {
-            return "[!] Ya jugaste " + getNombreMinijuego(indice) + " en esta sesión.";
-        }
-        minijuegoEnCurso = indice;
-        monstruoEnCurso = -1;
-        habilidadesEnCurso.clear();
-        return null;
-    }
-
-    public String getNombreMinijuegoEnCurso() {
-        return getNombreMinijuego(minijuegoEnCurso);
-    }
-
-    public String getDescripcionMinijuegoEnCurso() {
-        Minijuego minijuego = minijuegoSeguro(minijuegoEnCurso);
-        return minijuego == null ? "" : minijuego.getDescripcion();
-    }
-
-    public void cancelarSeleccionMinijuego() {
-        minijuegoEnCurso = -1;
-        cancelarSeleccionMonstruo();
-    }
-
     public int cantidadMonstruosDisponibles() {
         int disponibles = 0;
-        for (int i = 0; i < monstruos.size(); i++) {
-            if (!estaUsado(monstruos.get(i))) {
+        for (Monstruo m : monstruos) {
+            if (!monstruosUsados.contains(m)) {
                 disponibles++;
             }
         }
@@ -273,97 +219,68 @@ public class Sistema {
     }
 
     public String describirMonstruoDisponible(int indiceDisponible) {
-        Monstruo monstruo = monstruoDisponible(indiceDisponible);
-        return monstruo == null ? "" : monstruo.describir();
+        Monstruo m = getMonstruoDisponible(indiceDisponible);
+        return m == null ? "" : m.describir();
     }
 
-    public String seleccionarMonstruoDisponible(int indiceDisponible) {
-        if (minijuegoSeguro(minijuegoEnCurso) == null) {
-            return "[!] Primero debes elegir un minijuego.";
-        }
-        int indiceCatalogo = indiceCatalogoDisponible(indiceDisponible);
-        if (indiceCatalogo < 0) {
-            return "[!] Opción fuera de rango. Intente nuevamente.";
-        }
-
-        Monstruo monstruo = monstruoSeguro(indiceCatalogo);
-        if (monstruo == null || estaUsado(monstruo)) {
-            return "[!] Ese monstruo ya fue usado en esta sesión.";
-        }
-
-        monstruoEnCurso = indiceCatalogo;
-        cargarHabilidades(monstruo);
-        potencialEnCurso = minijuegos.get(minijuegoEnCurso).calcularPotencial(monstruo);
-        return null;
+    public double calcularPotencial(int idxMinijuego, int idxMonstruoDisponible) {
+        Minijuego juego = minijuegos.get(idxMinijuego);
+        Monstruo m = getMonstruoDisponible(idxMonstruoDisponible);
+        return juego.calcularPotencial(m);
     }
 
-    public void cancelarSeleccionMonstruo() {
-        monstruoEnCurso = -1;
-        potencialEnCurso = 0;
-        habilidadesEnCurso.clear();
+    public int cantidadHabilidades(int idxMonstruoDisponible) {
+        Monstruo m = getMonstruoDisponible(idxMonstruoDisponible);
+        return m == null ? 0 : obtenerHabilidades(m).size();
     }
 
-    public double getPotencialEnCurso() {
-        return potencialEnCurso;
-    }
-
-    public int cantidadHabilidadesEnCurso() {
-        return habilidadesEnCurso.size();
-    }
-
-    public String getNombreHabilidadEnCurso(int indice) {
-        if (indice >= 0 && indice < habilidadesEnCurso.size()) {
-            return habilidadesEnCurso.get(indice).getEtiqueta();
+    public String getNombreHabilidad(int idxMonstruoDisponible, int idxHabilidad) {
+        Monstruo m = getMonstruoDisponible(idxMonstruoDisponible);
+        if (m == null) return "";
+        ArrayList<Habilidad> habs = obtenerHabilidades(m);
+        if (idxHabilidad >= 0 && idxHabilidad < habs.size()) {
+            return habs.get(idxHabilidad).getEtiqueta();
         }
         return "";
     }
 
-    public ResultadoJugada confirmarJugada(int indiceHabilidad) {
-        Minijuego minijuego = minijuegoSeguro(minijuegoEnCurso);
-        Monstruo monstruo = monstruoSeguro(monstruoEnCurso);
-        if (minijuego == null || monstruo == null) {
-            return ResultadoJugada.error("[!] No hay una jugada en curso.");
-        }
-        if (isMinijuegoJugado(minijuegoEnCurso) || estaUsado(monstruo)) {
-            return ResultadoJugada.error("[!] Esa jugada ya fue realizada en esta sesión.");
-        }
+    public ResultadoJugada jugar(int idxMinijuego, int idxMonstruoDisponible, int opcionHabilidad) {
+        Minijuego juego = minijuegos.get(idxMinijuego);
+        Monstruo m = getMonstruoDisponible(idxMonstruoDisponible);
+        double potencial = juego.calcularPotencial(m);
 
-        Habilidad habilidad = Habilidad.NINGUNA;
+        ArrayList<Habilidad> habs = obtenerHabilidades(m);
         String mensajeHabilidad = "";
-        boolean usoHabilidad = false;
-        if (indiceHabilidad != 0) {
-            if (indiceHabilidad < 1 || indiceHabilidad > habilidadesEnCurso.size()) {
-                return ResultadoJugada.error("[!] Opción fuera de rango. Intente nuevamente.");
+        boolean efectiva = false;
+        double multiplicador = 1.0;
+
+        if (opcionHabilidad > 0 && opcionHabilidad <= habs.size()) {
+            Habilidad elegida = habs.get(opcionHabilidad - 1);
+            mensajeHabilidad = ejecutarHabilidad(m, elegida);
+            if (elegida == juego.getHabilidadPremiada()) {
+                efectiva = true;
+                multiplicador = 1.5;
             }
-            habilidad = habilidadesEnCurso.get(indiceHabilidad - 1);
-            mensajeHabilidad = ejecutarHabilidad(monstruo, habilidad);
-            usoHabilidad = true;
         }
 
-        boolean efectiva = usoHabilidad && habilidad == minijuego.getHabilidadPremiada();
-        double multiplicador = efectiva ? 1.5 : 1.0;
-        int puntaje = (int) Math.round(potencialEnCurso * 10.0 * multiplicador);
-
-        monstruosUsados.add(monstruo);
-        minijuegoJugado.set(minijuegoEnCurso, true);
-        puntajesMinijuego.set(minijuegoEnCurso, puntaje);
-        historial.add(new EntradaHistorial(
-                minijuego.getNombre(),
-                monstruo.getTipo(),
-                habilidad.getEtiqueta(),
-                puntaje));
+        int puntaje = (int) Math.round(potencial * 10.0 * multiplicador);
+        monstruosUsados.add(m);
+        minijuegosJugados[idxMinijuego] = true;
+        puntajesMinijuegos[idxMinijuego] = puntaje;
         puntajeSesion += puntaje;
-        cancelarSeleccionMinijuego();
-        return ResultadoJugada.ok(mensajeHabilidad, usoHabilidad, efectiva, puntaje);
+
+        String nombreHab = (opcionHabilidad > 0 && opcionHabilidad <= habs.size())
+                ? habs.get(opcionHabilidad - 1).getEtiqueta() : "Ninguna";
+        historial.add(new EntradaHistorial(juego.getNombre(), m.getTipo(), nombreHab, puntaje));
+
+        return new ResultadoJugada(mensajeHabilidad, efectiva, puntaje);
     }
 
     public String describirCatalogo(int indice) {
-        Monstruo monstruo = monstruoSeguro(indice);
-        if (monstruo == null) {
-            return "";
-        }
-        String estado = estaUsado(monstruo) ? "USADO" : "DISPONIBLE";
-        return monstruo.describir() + " | Habilidades: " + describirHabilidades(monstruo) + " | " + estado;
+        if (indice < 0 || indice >= monstruos.size()) return "";
+        Monstruo m = monstruos.get(indice);
+        String estado = monstruosUsados.contains(m) ? "USADO" : "DISPONIBLE";
+        return m.describir() + " | Habilidades: " + describirHabilidades(m) + " | " + estado;
     }
 
     public int cantidadHistorial() {
@@ -371,23 +288,19 @@ public class Sistema {
     }
 
     public String getHistorialMinijuego(int indice) {
-        EntradaHistorial entrada = entradaSegura(indice);
-        return entrada == null ? "" : entrada.getMinijuego();
+        return (indice >= 0 && indice < historial.size()) ? historial.get(indice).getMinijuego() : "";
     }
 
     public String getHistorialMonstruo(int indice) {
-        EntradaHistorial entrada = entradaSegura(indice);
-        return entrada == null ? "" : entrada.getMonstruo();
+        return (indice >= 0 && indice < historial.size()) ? historial.get(indice).getMonstruo() : "";
     }
 
     public String getHistorialHabilidad(int indice) {
-        EntradaHistorial entrada = entradaSegura(indice);
-        return entrada == null ? "" : entrada.getHabilidad();
+        return (indice >= 0 && indice < historial.size()) ? historial.get(indice).getHabilidad() : "";
     }
 
     public int getHistorialPuntaje(int indice) {
-        EntradaHistorial entrada = entradaSegura(indice);
-        return entrada == null ? 0 : entrada.getPuntaje();
+        return (indice >= 0 && indice < historial.size()) ? historial.get(indice).getPuntaje() : 0;
     }
 
     public int getPuntajeAcumulado() {
@@ -399,102 +312,75 @@ public class Sistema {
     }
 
     public String getNombreRanking(int indice) {
-        Jugador jugador = jugadorRanking(indice);
-        return jugador == null ? "" : jugador.getNombre();
+        ArrayList<Jugador> ranking = rankingOrdenado();
+        return (indice >= 0 && indice < ranking.size()) ? ranking.get(indice).getNombre() : "";
     }
 
     public int getPuntajeRanking(int indice) {
-        Jugador jugador = jugadorRanking(indice);
-        return jugador == null ? 0 : jugador.getPuntaje();
+        ArrayList<Jugador> ranking = rankingOrdenado();
+        return (indice >= 0 && indice < ranking.size()) ? ranking.get(indice).getPuntaje() : 0;
     }
 
     public ResultadoSesion terminarSesion() {
-        if (!sesionActiva) {
-            return new ResultadoSesion(0, false, false, false, 0, false);
-        }
-
         int total = puntajeSesion;
         boolean jugo = !historial.isEmpty();
-        boolean eraNuevo = !jugadorExistia;
+        boolean nuevo = (jugadorActual == null);
         boolean supero = false;
-        int anterior = jugadorExistia && jugadorActual != null ? jugadorActual.getPuntaje() : 0;
-        boolean guardar = false;
+        int anterior = (jugadorActual != null) ? jugadorActual.getPuntaje() : 0;
 
         if (jugo) {
-            guardar = true;
-            if (!jugadorExistia) {
-                Jugador nuevo = new Jugador(nombreSesion, total);
-                jugadores.add(nuevo);
-                jugadorActual = nuevo;
-                jugadorExistia = true;
-            } else if (jugadorActual != null && total > jugadorActual.getPuntaje()) {
+            if (nuevo) {
+                Jugador j = new Jugador(nombreSesion, total);
+                jugadores.add(j);
+                jugadorActual = j;
+            } else if (total > jugadorActual.getPuntaje()) {
                 supero = true;
                 jugadorActual.setPuntaje(total);
             }
         }
 
-        sesionActiva = false;
-        limpiarSesion();
-        return new ResultadoSesion(total, jugo, eraNuevo, supero, anterior, guardar);
+        return new ResultadoSesion(total, jugo, nuevo, supero, anterior);
     }
 
     public String lineaRegistro(int indice) {
         if (indice >= 0 && indice < jugadores.size()) {
-            Jugador jugador = jugadores.get(indice);
-            return jugador.getNombre() + ";" + jugador.getPuntaje();
+            Jugador j = jugadores.get(indice);
+            return j.getNombre() + ";" + j.getPuntaje();
         }
         return "";
     }
 
-    private void limpiarSesion() {
-        puntajeSesion = 0;
-        historial.clear();
-        monstruosUsados.clear();
-        for (int i = 0; i < minijuegoJugado.size(); i++) {
-            minijuegoJugado.set(i, false);
-            puntajesMinijuego.set(i, 0);
+    private Monstruo getMonstruoDisponible(int indiceDisponible) {
+        int vistos = 0;
+        for (Monstruo m : monstruos) {
+            if (!monstruosUsados.contains(m)) {
+                if (vistos == indiceDisponible) {
+                    return m;
+                }
+                vistos++;
+            }
         }
-        cancelarSeleccionMinijuego();
+        return null;
     }
 
-    private void cargarHabilidades(Monstruo monstruo) {
-        habilidadesEnCurso.clear();
-        if (monstruo instanceof Mordedor) {
-            habilidadesEnCurso.add(Habilidad.MORDER);
-        }
-        if (monstruo instanceof Volador) {
-            habilidadesEnCurso.add(Habilidad.VOLAR);
-        }
-        if (monstruo instanceof Regenerable) {
-            habilidadesEnCurso.add(Habilidad.REGENERARSE);
-        }
-        if (monstruo instanceof Furioso) {
-            habilidadesEnCurso.add(Habilidad.ENFURECERSE);
-        }
+    private ArrayList<Habilidad> obtenerHabilidades(Monstruo m) {
+        ArrayList<Habilidad> lista = new ArrayList<>();
+        if (m instanceof Mordedor) lista.add(Habilidad.MORDER);
+        if (m instanceof Volador) lista.add(Habilidad.VOLAR);
+        if (m instanceof Regenerable) lista.add(Habilidad.REGENERARSE);
+        if (m instanceof Furioso) lista.add(Habilidad.ENFURECERSE);
+        return lista;
     }
 
-    private String describirHabilidades(Monstruo monstruo) {
-        String texto = "";
-        if (monstruo instanceof Mordedor) {
-            texto = agregarHabilidad(texto, Habilidad.MORDER.getEtiqueta());
+    private String describirHabilidades(Monstruo m) {
+        ArrayList<Habilidad> habs = obtenerHabilidades(m);
+        if (habs.isEmpty()) return "Ninguna";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < habs.size(); i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(habs.get(i).getEtiqueta());
         }
-        if (monstruo instanceof Volador) {
-            texto = agregarHabilidad(texto, Habilidad.VOLAR.getEtiqueta());
-        }
-        if (monstruo instanceof Regenerable) {
-            texto = agregarHabilidad(texto, Habilidad.REGENERARSE.getEtiqueta());
-        }
-        if (monstruo instanceof Furioso) {
-            texto = agregarHabilidad(texto, Habilidad.ENFURECERSE.getEtiqueta());
-        }
-        return texto.isEmpty() ? "Ninguna" : texto;
-    }
-
-    private String agregarHabilidad(String texto, String etiqueta) {
-        if (texto.isEmpty()) {
-            return etiqueta;
-        }
-        return texto + ", " + etiqueta;
+        return sb.toString();
     }
 
     private String ejecutarHabilidad(Monstruo monstruo, Habilidad habilidad) {
@@ -513,35 +399,6 @@ public class Sistema {
         return "";
     }
 
-    private boolean estaUsado(Monstruo monstruo) {
-        return monstruo != null && monstruosUsados.contains(monstruo);
-    }
-
-    private int indiceCatalogoDisponible(int indiceDisponible) {
-        if (indiceDisponible < 0) {
-            return -1;
-        }
-        int vistos = 0;
-        for (int i = 0; i < monstruos.size(); i++) {
-            if (!estaUsado(monstruos.get(i))) {
-                if (vistos == indiceDisponible) {
-                    return i;
-                }
-                vistos++;
-            }
-        }
-        return -1;
-    }
-
-    private Monstruo monstruoDisponible(int indiceDisponible) {
-        return monstruoSeguro(indiceCatalogoDisponible(indiceDisponible));
-    }
-
-    private Jugador jugadorRanking(int indice) {
-        ArrayList<Jugador> ranking = rankingOrdenado();
-        return jugadorSeguro(ranking, indice);
-    }
-
     private ArrayList<Jugador> rankingOrdenado() {
         ArrayList<Jugador> ranking = new ArrayList<>();
         for (int i = 0; i < jugadores.size(); i++) {
@@ -551,8 +408,12 @@ public class Sistema {
         for (int i = 0; i < ranking.size(); i++) {
             int mejor = i;
             for (int j = i + 1; j < ranking.size(); j++) {
-                if (esMejorEnRanking(ranking.get(j), ranking.get(mejor))) {
+                if (ranking.get(j).getPuntaje() > ranking.get(mejor).getPuntaje()) {
                     mejor = j;
+                } else if (ranking.get(j).getPuntaje() == ranking.get(mejor).getPuntaje()) {
+                    if (ranking.get(j).getNombre().compareToIgnoreCase(ranking.get(mejor).getNombre()) < 0) {
+                        mejor = j;
+                    }
                 }
             }
             if (mejor != i) {
@@ -564,17 +425,10 @@ public class Sistema {
         return ranking;
     }
 
-    private boolean esMejorEnRanking(Jugador candidato, Jugador actual) {
-        if (candidato.getPuntaje() != actual.getPuntaje()) {
-            return candidato.getPuntaje() > actual.getPuntaje();
-        }
-        return candidato.getNombre().compareToIgnoreCase(actual.getNombre()) < 0;
-    }
-
     private Jugador buscarJugador(String nombre) {
-        for (int i = 0; i < jugadores.size(); i++) {
-            if (jugadores.get(i).getNombre().equals(nombre)) {
-                return jugadores.get(i);
+        for (Jugador j : jugadores) {
+            if (j.getNombre().equalsIgnoreCase(nombre)) {
+                return j;
             }
         }
         return null;
@@ -582,33 +436,5 @@ public class Sistema {
 
     private boolean enRango(int valor, int minimo, int maximo) {
         return valor >= minimo && valor <= maximo;
-    }
-
-    private Monstruo monstruoSeguro(int indice) {
-        if (indice >= 0 && indice < monstruos.size()) {
-            return monstruos.get(indice);
-        }
-        return null;
-    }
-
-    private Minijuego minijuegoSeguro(int indice) {
-        if (indice >= 0 && indice < minijuegos.size()) {
-            return minijuegos.get(indice);
-        }
-        return null;
-    }
-
-    private EntradaHistorial entradaSegura(int indice) {
-        if (indice >= 0 && indice < historial.size()) {
-            return historial.get(indice);
-        }
-        return null;
-    }
-
-    private Jugador jugadorSeguro(ArrayList<Jugador> lista, int indice) {
-        if (lista != null && indice >= 0 && indice < lista.size()) {
-            return lista.get(indice);
-        }
-        return null;
     }
 }
