@@ -1,4 +1,10 @@
 # Eclipse y compilación
+.project
+**/.project
+.classpath
+**/.classpath
+.settings/
+**/.settings/
 .metadata/
 **/.metadata/
 bin/
@@ -9,5 +15,9 @@ bin/
 *.log
 hs_err_pid*
 
-# Enlace de compatibilidad local en la raíz
+# Entregas
+entrega.txt
+**/entrega.txt
+
+# Enlace local
 /Taller03
